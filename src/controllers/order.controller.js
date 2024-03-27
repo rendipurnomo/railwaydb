@@ -6,15 +6,9 @@ exports.getOrders = async (req, res) => {
   try {
     const orders = await prisma.orders.findMany({
       orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        OrderItem: true,
+        createdAt: 'asc',
       }
     });
-    if (orders.length === 0 || !orders) {
-      return res.status(404).json({ message: 'Belum ada order' });
-    }
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -22,14 +16,12 @@ exports.getOrders = async (req, res) => {
 };
 
 exports.getOrderByid = async (req, res) => {
+  const {username} = req.params;
   try {
-    const order = await prisma.orders.findUnique({
+    const order = await prisma.orders.findFirst({
       where: {
-        id: req.params.id,
-      },
-      include: {
-        OrderItem: true,
-      },
+        username: username,
+      }
     });
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -41,68 +33,25 @@ exports.getOrderByid = async (req, res) => {
 };
 
 exports.createOrder = async (req, res) => {
-  const { userId, productId, quantity, totalPrice } = req.body;
-  const user = await prisma.users.findUnique({
-    where: {
-      id: userId,
-    },
-  });
+  const {username, quantity, memo, totalPrice, address} = req.body;
 
-  if (!user) {
-    return res.status(400).json({ message: 'User not found' });
+  if(!username || !quantity || !memo || !totalPrice || !address) {
+    return res.status(400).json({ message: 'Semua kolom harus diisi' });
   }
 
-  const product = await prisma.products.findUnique({
-    where: {
-      id: productId,
-    },
-  });
-
   try {
-    const order = await prisma.orders.upsert({
-      where: { userId: userId },
-      create: {
-        userId: userId,
-        pengiriman: user.address,
-        OrderItem: {
-          create: {
-            productId: productId,
-            quantity: Number(quantity),
-            totalPrice: totalPrice,
-            price: product.price,
-          },
-        },
-      },
-      update: {
-        pengiriman: user.address,
-        OrderItem: {
-          create: {
-            productId: productId,
-            quantity: Number(quantity),
-            totalPrice: totalPrice,
-            price: product.price,
-          }
-        }
-      },
-      include: {
-        OrderItem: true,
+    const order = await prisma.orders.create({
+      data: {
+        username: username,
+        quantity: Number(quantity),
+        pengiriman: address,
+        memo: memo,
+        totalPrice: String(totalPrice),
       }
-    });
+    })
 
-    if (order) {
-      const stocks = Number(product.stock) - Number(quantity);
-      await prisma.products.update({
-        where: {
-          id: productId,
-        },
-        data: {
-          stock: stocks,
-        },
-      });
-    }
-
-    res.status(201).json(order);
-  } catch (error) {
+    res.status(200).json({ message: 'Order created', order });
+  }catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
@@ -167,19 +116,11 @@ exports.deleteOrder = async (req, res) => {
     return res.status(404).json({ message: 'Order not found' });
   }
   try {
-    const orderItem = await prisma.orderItem.deleteMany({
+    await prisma.orders.delete({
       where: {
-        orderId: id,
+        id: id,
       },
     });
-
-    if (orderItem) {
-      await prisma.orders.delete({
-        where: { id: id },
-      });
-
-      res.status(200).json({ message: 'Order deleted' });
-    }
 
     res.status(200).json({ message: 'Order deleted' });
   } catch (error) {

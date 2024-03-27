@@ -1,51 +1,60 @@
-const {PrismaClient} = require('@prisma/client')
-const path = require('path')
-const fs = require('fs')
-const prisma = new PrismaClient()
+const { PrismaClient } = require('@prisma/client');
+const path = require('path');
+const fs = require('fs');
+const prisma = new PrismaClient();
 
 exports.getBanners = async (req, res) => {
   try {
     const banners = await prisma.banners.findMany();
-    if (banners.length === 0 || !banners) {
-      return res.status(404).json({ message: 'Banner not found' });
-    }
     res.status(200).json(banners);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
+
+exports.getBannerById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const banner = await prisma.banners.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    res.status(200).json(banner);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 exports.createBanner = async (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0 || !req.files.file) {
-    return res.status(400).json({ message: 'No files were uploaded.' });
+    return res.status(400).json({ message: 'Please upload a Banner picture' });
   }
 
   const file = req.files.file;
   const fileSize = file.data.length;
   const ext = path.extname(file.name);
   const fileName = file.md5 + '_' + Date.now() + ext;
-  const url = `${req.protocol}://${req.get('host')}/banners/${fileName}`;
-  const allowedType = ['.png', '.jpg', '.jpeg'];
+  const url = `${req.protocol}://umkm.up.railway.app/banners/${fileName}`;
+  const allowedType = ['.png', '.jpg', '.jpeg', '.webp'];
 
   if (!allowedType.includes(ext.toLowerCase())) {
-    res.status(422).json({ msg: 'Invalid Images' });
+    return res.status(422).json({ message: 'Format Foto tidak didukung' });
   }
 
-  if (fileSize > 2000000) {
-    res.status(422).json({ msg: 'Image must be less than 2mb' });
+  if (fileSize > 5000000) {
+    return res.status(422).json({ message: 'Ukuran Foto harus kurang dari 5Mb' });
   }
-  const { name } =
-    req.body;
-  if (
-    !name
-  ) {
-    return res.status(400).json({ message: 'Please fill in all fields' });
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: 'Nama harus diisi' });
   }
   file.mv(`src/public/banners/${fileName}`, async (err) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     }
-    try {
+  });
+  try {
     await prisma.banners.create({
       data: {
         name,
@@ -58,18 +67,13 @@ exports.createBanner = async (req, res) => {
     console.log(error.message);
     res.status(500).json({ message: 'Internal server error' });
   }
-  });
-}
+};
 
 exports.updateBanner = async (req, res) => {
   const { id } = req.params;
   const banner = await prisma.banners.findUnique({
     where: { id: id },
   });
-
-  if (!banner) {
-    return res.status(404).json({ message: 'Banner not found' });
-  }
 
   let fileName = '';
   if (req.files === null) {
@@ -82,39 +86,40 @@ exports.updateBanner = async (req, res) => {
     const allowedType = ['.png', '.jpg', '.jpeg'];
 
     if (!allowedType.includes(ext.toLowerCase())) {
-      res.status(422).json({ msg: 'Invalid Images' });
+      return res.status(422).json({ message: 'Format image tidak didukung' });
     }
 
-    if (fileSize > 2000000) {
-      res.status(422).json({ msg: 'Image must be less than 2mb' });
+    if (fileSize > 5000000) {
+      return res
+        .status(422)
+        .json({ message: 'Ukuran image harus kurang dari 5Mb' });
     }
 
     const filePath = `src/public/banners/${banner.image}`;
     fs.unlinkSync(filePath);
-    const { name } =
-      req.body;
-    const url = `${req.protocol}://${req.get('host')}/banners/${fileName}`;
 
     file.mv(`src/public/banners/${fileName}`, async (err) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ msg: err.message });
-      }
-      try {
-        const banner = await prisma.banners.update({
-          where: { id: id },
-          data: {
-            name,
-            image: fileName,
-            ImageUrl: url,
-          },
-        });
-        res.status(200).json({ message: 'Banner updated', banner });
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
+        return res.status(500).json({ message: err.message });
       }
     });
+  }
+  const { name } = req.body;
+  const url = `${req.protocol}://umkm.up.railway.app/banners/${fileName}`;
+  try {
+    const banner = await prisma.banners.update({
+      where: { id: id },
+      data: {
+        name,
+        image: fileName,
+        ImageUrl: url,
+      },
+    });
+    res.status(200).json({ message: 'Banner updated', banner });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -123,10 +128,6 @@ exports.deleteBanner = async (req, res) => {
   const banner = await prisma.banners.findUnique({
     where: { id: id },
   });
-
-  if (!banner) {
-    return res.status(404).json({ message: 'Banner not found' });
-  }
 
   const filePath = `src/public/banners/${banner.image}`;
   fs.unlinkSync(filePath);
@@ -140,4 +141,4 @@ exports.deleteBanner = async (req, res) => {
     console.log(error.message);
     res.status(500).json({ message: 'Internal server error' });
   }
-}
+};

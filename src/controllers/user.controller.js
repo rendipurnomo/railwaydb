@@ -6,7 +6,11 @@ const prisma = new PrismaClient();
 
 exports.getUsers = async (req, res) => {
   try {
-    const users = await prisma.users.findMany();
+    const users = await prisma.users.findMany({
+      orderBy: {
+        createdAt: 'asc',
+      }
+    });
     if (!users) {
       return res.status(404).json({ message: 'Users not found' });
     }
@@ -21,10 +25,7 @@ exports.getUserById = async (req, res) => {
   const { id } = req.params;
   try {
     const user = await prisma.users.findUnique({
-      where: { id: id },
-      include: { Orders: {
-        include: { OrderItem: true },
-      } },
+      where: { id: id }
     });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -54,14 +55,14 @@ exports.updateUser = async (req, res) => {
     const fileSize = file.data.length;
     const ext = path.extname(file.name);
     fileName = file.md5 + '_' + Date.now() + ext;
-    const allowedType = ['.png', '.jpg', '.jpeg'];
+    const allowedType = ['.png', '.jpg', '.jpeg', '.webp'];
 
     if (!allowedType.includes(ext.toLowerCase())) {
-      res.status(422).json({ msg: 'Invalid Images' });
+      return res.status(422).json({ msg: 'Format foto tidak didukung' });
     }
 
     if (fileSize > 2000000) {
-      res.status(422).json({ msg: 'Image must be less than 2mb' });
+      return res.status(422).json({ msg: 'Ukuran fotonya harus kurang dari 2Mb' });
     }
 
     const filePath = `src/public/images/${user.profilePic}`;
@@ -70,12 +71,15 @@ exports.updateUser = async (req, res) => {
     file.mv(`src/public/images/${fileName}`, (err) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ msg: err.message });
+        return res.status(500).json({ message: err.message });
       }
     });
   }
   const { fullName, username, email, address, phone } = req.body;
-  const url = `${req.protocol}://${req.get('host')}/images/${fileName}`;
+  if (!fullName || !username || !email || !address || !phone) {
+    return res.status(400).json({ message: 'Semua kolom harus diisi' });
+  }
+  const url = `${req.protocol}://umkm.up.railway.app/images/${fileName}`;
   try {
     const user = await prisma.users.update({
       where: { id: id },

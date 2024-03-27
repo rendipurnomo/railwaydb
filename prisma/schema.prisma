@@ -25,7 +25,6 @@ model Users {
   phone       String @db.VarChar(20)
   roles       String @default("member")
   event       Boolean @default(false)
-  Orders      Orders[]
 
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @map("updated_at")
@@ -51,6 +50,7 @@ enum Positions {
   REKOMENDASI
   TERBARU
   TERLARIS
+  PROMO
 }
 
 
@@ -65,7 +65,6 @@ model Products {
   image       String
   imageUrl    String @map("image_url")
   position    Positions
-  OrderItem   OrderItem[]
 
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @map("updated_at")
@@ -75,35 +74,17 @@ model Products {
 
 model Orders {
   id          String  @id @default(cuid())
-  userId      String
+  username    String
   pengiriman  String
-  OrderItem   OrderItem[]
-
-  Users       Users @relation(fields: [userId],references: [id])
+  quantity    Int @default(0) @db.UnsignedInt
+  totalPrice  String
+  delivery    Boolean @default(false)
+  memo        String @default("")
 
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @map("updated_at")
 
   @@map("order")
-  @@unique([userId])
-}
-
-model OrderItem {
-  id          String @id @default(cuid())
-  quantity    Int @default(0) @db.UnsignedInt
-  totalPrice  String
-  price       String
-  delivery    Boolean @default(false)
-  paid        Boolean @default(false)
-  orderId     String
-  Orders      Orders @relation(fields: [orderId], references: [id])
-  productId   String
-  Products    Products @relation(fields: [productId],references: [id])
-
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @map("updated_at")
-
-  @@map("order_item")
 }
 
 model Banners {

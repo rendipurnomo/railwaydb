@@ -7,6 +7,7 @@ const productRoute = require("./routes/product.route.js")
 const orderRoute = require("./routes/order.route.js")
 const bannerRoute = require("./routes/banner.route.js")
 const blogRoute = require("./routes/blog.route.js")
+const cors = require("cors")
 
 const dotenv = require("dotenv")
 dotenv.config()
@@ -17,8 +18,8 @@ const app = express()
 app.use(express.json())
 app.use(cookieParser())
 app.use(fileUpload())
-app.use(express.static('public'))
-app.use(express.urlencoded({ extended: true }))
+app.use(express.static('src/public'))
+app.use(cors())
 
 
 app.use("/api/users", userRoute)

@@ -6,8 +6,8 @@ const { protect, protectAdmin } = require("../middleware/protect.js");
 
 router.get("/", blogController.getBlogs);
 router.get("/:id", blogController.getBlogById);
-router.post("/", protect, protectAdmin, blogController.createBlog);
-router.put("/:id", protect, protectAdmin, blogController.updateBlog);
-router.delete("/:id", protect, protectAdmin, blogController.deleteBlog);
+router.post("/", blogController.createBlog);
+router.put("/:id", blogController.updateBlog);
+router.delete("/:id", blogController.deleteBlog);
 
 module.exports = router

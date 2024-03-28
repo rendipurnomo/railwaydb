@@ -100,6 +100,7 @@ exports.signUpUser = async (req, res) => {
         roles: newUser.roles,
         event: newUser.event,
         profilePic: newUser.profilePic,
+        picUrl: newUser.picUrl
       });
     } else {
       res.status(500).json({ message: 'Invalid user data' });

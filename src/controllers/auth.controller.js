@@ -144,6 +144,7 @@ exports.loginUser = async (req, res) => {
       roles: user.roles,
       event: user.event,
       profilePic: user.profilePic,
+      picUrl: user.picUrl,
     });
   } catch (error) {
     console.log(error);

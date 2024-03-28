@@ -23,7 +23,7 @@ exports.signUpUser = async (req, res) => {
   const fileSize = file.data.length;
   const ext = path.extname(file.name);
   const fileName = file.md5 + '_' + Date.now() + ext;
-  const url = `${req.protocol}://umkm.up.railway.app/images/${fileName}`;
+  const url = `${req.protocol}://${req.get('host')}/images/${fileName}`;
   const allowedType = ['.png', '.jpg', '.jpeg', '.webp'];
 
   if (!fullName || !username || !password || !confirmPassword || !email || !address || !phone) {

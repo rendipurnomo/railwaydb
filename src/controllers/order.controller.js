@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 exports.getOrders = async (req, res) => {
   try {
-    const orders = await prisma.orders.findMany({
+    const orders = await prisma.order.findMany({
       orderBy: {
         createdAt: 'asc',
       }
@@ -18,7 +18,7 @@ exports.getOrders = async (req, res) => {
 exports.getOrderByid = async (req, res) => {
   const {username} = req.params;
   try {
-    const order = await prisma.orders.findFirst({
+    const order = await prisma.order.findFirst({
       where: {
         username: username,
       }
@@ -40,7 +40,7 @@ exports.createOrder = async (req, res) => {
   }
 
   try {
-    const order = await prisma.orders.create({
+    const order = await prisma.order.create({
       data: {
         username: username,
         quantity: Number(quantity),
@@ -58,7 +58,7 @@ exports.createOrder = async (req, res) => {
 
 exports.updateDelivery = async (req, res) => {
   const { id } = req.params;
-  const order = await prisma.orderItem.findUnique({
+  const order = await prisma.order.findUnique({
     where: { id: id },
   });
 
@@ -67,7 +67,7 @@ exports.updateDelivery = async (req, res) => {
   }
 
   try {
-    const order = await prisma.orderItem.update({
+    const order = await prisma.order.update({
       where: { id: id },
       data: {
         delivery: true,
@@ -83,7 +83,7 @@ exports.updateDelivery = async (req, res) => {
 
 exports.updatePayment = async (req, res) => {
   const { id } = req.params;
-  const order = await prisma.orderItem.findUnique({
+  const order = await prisma.order.findUnique({
     where: { id: id },
   });
 
@@ -92,7 +92,7 @@ exports.updatePayment = async (req, res) => {
   }
 
   try {
-    const order = await prisma.orderItem.update({
+    const order = await prisma.order.update({
       where: { id: id },
       data: {
         paid: true,
@@ -108,7 +108,7 @@ exports.updatePayment = async (req, res) => {
 
 exports.deleteOrder = async (req, res) => {
   const { id } = req.params;
-  const order = await prisma.orders.findUnique({
+  const order = await prisma.order.findUnique({
     where: { id: id },
   });
 
@@ -116,7 +116,7 @@ exports.deleteOrder = async (req, res) => {
     return res.status(404).json({ message: 'Order not found' });
   }
   try {
-    await prisma.orders.delete({
+    await prisma.order.delete({
       where: {
         id: id,
       },
